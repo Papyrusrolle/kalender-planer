@@ -1,0 +1,16 @@
+# Deploy Now: Deployment-Konfiguration (Aufbau wie im IONOS-Beispiel laravel-starter)
+# https://docs.ionos.space/docs/deployment-configuration/
+#
+# data/ enthält die Kalenderdaten (kalender.json, Tagessicherungen).
+# Sie entstehen erst auf dem Server und dürfen bei Updates nie überschrieben oder gelöscht werden.
+version: 1.0
+deploy:
+  bootstrap:
+    excludes:
+      - werkzeuge
+      - .template-renderer-data
+  recurring:
+    excludes:
+      - data
+      - werkzeuge
+      - .template-renderer-data
