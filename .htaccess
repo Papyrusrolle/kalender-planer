@@ -1,0 +1,14 @@
+Options -Indexes
+
+# Interne Dateien und Ordner nie ausliefern
+<FilesMatch "^(kalender-auth\.php|README.*|\.gitignore)$">
+  Require all denied
+</FilesMatch>
+RedirectMatch 404 /(data|werkzeuge|_netlify-variante|\.deploy-now|\.git|\.github)(/|$)
+
+<IfModule mod_headers.c>
+  Header always set X-Frame-Options "DENY"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "no-referrer"
+  Header always set X-Robots-Tag "noindex, nofollow"
+</IfModule>
