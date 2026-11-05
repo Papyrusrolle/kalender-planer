@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Notizen</title>
+<meta name="theme-color" content="#1f5fae">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Notizen">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<style>
+:root{--bg:#f4f6f9;--panel:#fff;--text:#1d232b;--muted:#6b7480;--line:#e2e5ea;--accent:#1f5fae;--sel:#eaf1fb;--danger:#c0392b;--warn:#b7791f;--ok:#1f9a5a;--shadow:0 10px 40px rgba(0,0,0,.18)}
+@media (prefers-color-scheme:dark){:root{--bg:#121519;--panel:#1b1f25;--text:#e6e9ee;--muted:#98a1ad;--line:#2c323b;--accent:#5b9bff;--sel:#1f2a3a;--danger:#ff6b5e;--warn:#e0a826;--ok:#3cc27e;--shadow:0 10px 40px rgba(0,0,0,.6)}}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);overflow:hidden}
+button{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:8px;padding:7px 11px;cursor:pointer;line-height:1.2}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.danger{color:var(--danger)}
+button.icon{padding:7px 9px;min-width:36px}
+button.on{background:var(--sel);border-color:var(--accent);color:var(--accent)}
+input,select,textarea{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+input:focus,textarea:focus,select:focus{outline:2px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:-1px;border-color:var(--accent)}
+a{color:var(--accent)}
+.app{display:grid;grid-template-columns:330px minmax(0,1fr);height:100%}
+/* Liste */
+.side{display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel);min-height:0}
+.side header{display:flex;gap:8px;align-items:center;padding:12px 12px 8px}
+.side h1{font-size:19px;margin:0;font-weight:650;flex:1}
+.tools{display:flex;gap:6px;padding:0 12px 10px}
+.tools input{flex:1;min-width:0}
+.tools select{width:auto;max-width:120px}
+.list{flex:1;overflow-y:auto;padding:0 6px 12px;-webkit-overflow-scrolling:touch}
+.item{display:block;width:100%;text-align:left;border:none;border-radius:8px;padding:9px 10px;margin:1px 0;background:none}
+.item:hover{background:color-mix(in srgb,var(--sel) 60%,transparent)}
+.item.sel{background:var(--sel)}
+.item b{display:flex;gap:6px;font-weight:600;font-size:14.5px}
+.item b span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item p{margin:2px 0 0;color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .meta{display:flex;gap:6px;align-items:center;margin-top:3px;font-size:12px;color:var(--muted)}
+.tag{display:inline-block;font-size:11.5px;padding:0 7px;border-radius:10px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);white-space:nowrap}
+.dirty{width:7px;height:7px;border-radius:50%;background:var(--warn);display:inline-block;flex:none;align-self:center}
+.empty{color:var(--muted);padding:24px 12px;text-align:center;font-size:14px}
+.foot{border-top:1px solid var(--line);padding:8px 12px calc(8px + env(safe-area-inset-bottom));font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.foot .sp{flex:1}
+.foot button{font-size:12px;padding:4px 8px}
+.st.err{color:var(--danger)}.st.ok{color:var(--ok)}.st.warn{color:var(--warn)}
+/* Editor */
+.ed{display:flex;flex-direction:column;min-height:0;min-width:0}
+.ed .bar{display:flex;gap:6px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+.ed .bar .sp{flex:1}
+.ed .bar .st{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#back{display:none}
+.sheet{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.paper{max-width:820px;margin:0 auto;padding:22px 22px calc(40px + env(safe-area-inset-bottom))}
+#title{font-size:26px;font-weight:700;border:none;padding:4px 0;background:none}
+#title:focus,#body:focus,#tags:focus{outline:none}
+#tags{border:none;background:none;padding:2px 0;font-size:14px;color:var(--accent)}
+#tags::placeholder,#title::placeholder,#body::placeholder{color:var(--muted);opacity:.7}
+#body{border:none;background:none;padding:12px 0;resize:none;min-height:60vh;line-height:1.6;font-size:16px;overflow:hidden}
+.ro{background:color-mix(in srgb,var(--warn) 14%,transparent);border-radius:8px;padding:8px 12px;font-size:13px;margin-top:8px}
+.when{font-size:12px;color:var(--muted);margin-top:4px}
+.placeholder{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:24px}
+.hidden{display:none!important}
+dialog{border:none;border-radius:12px;padding:0;width:min(540px,calc(100vw - 24px));background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog form{padding:18px 20px}
+dialog h2{margin:0 0 10px;font-size:18px}
+dialog p{margin:0 0 10px;font-size:14px}
+dialog ol{padding-left:20px;margin:0 0 12px;font-size:14px}
+dialog li{margin-bottom:4px}
+dialog label{display:block;font-size:13px;color:var(--muted);margin:10px 0 0}
+dialog label input{margin-top:3px}
+.df{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.msg{color:var(--danger);font-size:13px;margin-top:8px;min-height:1em}
+.help{font-size:13px;line-height:1.7}
+.help code{background:var(--bg);padding:1px 5px;border-radius:4px}
+@media (max-width:760px){
+  .app{grid-template-columns:1fr}
+  .side{border-right:none}
+  .ed{display:none}
+  body.editing .side{display:none}
+  body.editing .ed{display:flex}
+  #back{display:inline-block}
+  .paper{padding:14px 16px calc(40px + env(safe-area-inset-bottom))}
+  #title{font-size:23px}
+  input,select,textarea{font-size:16px} /* verhindert Zoom auf dem iPhone */
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="side">
+    <header><h1>Notizen</h1><button class="primary" id="new" title="Neue Notiz (Strg+Alt+N)">+ Neu</button></header>
+    <div class="tools">
+      <input id="q" type="search" placeholder="Suchen …" autocomplete="off">
+      <select id="tagf" aria-label="Nach Tag filtern"><option value="">Alle Tags</option></select>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="foot"><span class="st" id="net">…</span><span class="sp"></span><button id="sync" title="Neu laden">↻</button><button id="menu" title="Einstellungen">⚙︎</button></div>
+  </section>
+  <section class="ed">
+    <div class="bar">
+      <button id="back" class="icon" title="Zurück">‹</button>
+      <span class="st" id="st"></span><span class="sp"></span>
+      <button id="pin" class="icon" title="Anpinnen">📌</button>
+      <a id="open" target="_blank" rel="noopener"><button class="icon" title="In Notion öffnen">↗︎</button></a>
+      <button id="del" class="icon danger" title="Löschen">🗑</button>
+    </div>
+    <div class="placeholder" id="none">Wähle links eine Notiz oder lege mit „+ Neu“ eine an.</div>
+    <div class="sheet hidden" id="sheet"><div class="paper">
+      <input id="title" placeholder="Titel" autocomplete="off" enterkeyhint="next">
+      <input id="tags" placeholder="Tags, durch Komma getrennt" autocomplete="off" list="taglist">
+      <datalist id="taglist"></datalist>
+      <div class="when" id="when"></div>
+      <div class="ro hidden" id="ro">Diese Notiz enthält Inhalte (z. B. Bilder, Tabellen oder eingerückte Blöcke), die die App nicht bearbeiten kann. Titel und Tags lassen sich ändern – den Text bitte in Notion bearbeiten.</div>
+      <textarea id="body" placeholder="Schreib los … (# Überschrift, - Liste, [ ] Aufgabe, **fett**)"></textarea>
+    </div></div>
+  </section>
+</div>
+
+<dialog id="login"><form method="dialog" id="loginForm">
+  <h2>Anmelden</h2>
+  <p>Die Notizen sind mit demselben Passwort geschützt wie dein Kalender. Es bleibt auf diesem Gerät gespeichert.</p>
+  <label>Passwort<input type="password" name="pw" required autocomplete="current-password"></label>
+  <div class="msg" id="loginMsg"></div>
+  <div class="df"><button type="submit" class="primary">Anmelden</button></div>
+</form></dialog>
+
+<dialog id="setup"><form method="dialog" id="setupForm">
+  <h2>Mit Notion verbinden</h2>
+  <ol>
+    <li>Auf <a href="https://www.notion.so/profile/integrations" target="_blank" rel="noopener">notion.so/profile/integrations</a> eine <b>interne Integration</b> anlegen (Name z. B. „Notiz-App“) und den <b>Schlüssel</b> kopieren.</li>
+    <li>In Notion eine <b>Datenbank</b> anlegen (z. B. ganzseitige Tabelle „Notizen“).</li>
+    <li>In der Datenbank oben rechts <b>••• → Verbindungen</b> → deine Integration hinzufügen.</li>
+    <li>Den Link der Datenbank kopieren (••• → Link kopieren) und hier einfügen.</li>
+  </ol>
+  <label>Notion-Schlüssel<input name="token" type="password" placeholder="ntn_… oder secret_…" autocomplete="off"></label>
+  <label>Link zur Datenbank<input name="db" required placeholder="https://www.notion.so/…" autocomplete="off"></label>
+  <p style="font-size:12.5px;color:var(--muted);margin-top:8px">Der Schlüssel wird nur auf deinem Server gespeichert, nicht auf den Geräten. Die Spalten „Tags“ und „Angepinnt“ werden bei Bedarf automatisch angelegt.</p>
+  <div class="msg" id="setupMsg"></div>
+  <div class="df"><button type="button" id="setupCancel">Abbrechen</button><button type="submit" class="primary">Verbinden</button></div>
+</form></dialog>
+
+<dialog id="settings"><form method="dialog">
+  <h2>Einstellungen</h2>
+  <p id="dbInfo"></p>
+  <div class="help">
+    <b>Schreiben</b><br>
+    <code># Überschrift</code> <code>## kleiner</code> <code>- Punkt</code> <code>1. Nummer</code> <code>[ ] Aufgabe</code> <code>[x] erledigt</code><br>
+    <code>&gt; Zitat</code> <code>---</code> Trennlinie, <code>```</code> Code-Block, <code>**fett**</code> <code>*kursiv*</code> <code>~~durch~~</code> <code>[Text](https://…)</code><br>
+    Jede Zeile wird in Notion ein eigener Block. Gespeichert wird automatisch.<br><br>
+    <b>Als App installieren</b><br>
+    iPhone: in Safari <i>Teilen → Zum Home-Bildschirm</i>.<br>
+    Windows: in Edge <i>… → Apps → Diese Seite als App installieren</i> (Chrome: Installieren-Symbol in der Adressleiste).
+  </div>
+  <div class="df">
+    <button type="button" id="reSetup">Notion neu verbinden</button>
+    <button type="button" id="logout" class="danger">Auf diesem Gerät abmelden</button>
+    <button value="close" class="primary">Fertig</button>
+  </div>
+</form></dialog>
+
+<dialog id="conflict"><form method="dialog">
+  <h2>Gleichzeitig geändert</h2>
+  <p>„<span id="cTitle"></span>“ wurde inzwischen auf einem anderen Gerät oder direkt in Notion geändert.</p>
+  <div class="df">
+    <button value="theirs">Andere Fassung laden<br><small>(meine als Kopie sichern)</small></button>
+    <button value="mine" class="primary">Meine Fassung speichern<br><small>(andere überschreiben)</small></button>
+  </div>
+</form></dialog>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const PWKEY='planer.pw', CACHE='notizen.cache.v1', OUT='notizen.outbox.v1', API='notion.php';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}};
+const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const pw=()=>{try{return localStorage.getItem(PWKEY)||''}catch(e){return ''}};
+
+/* Zustand: notes = alles, was wir von Notion kennen (lokal gespiegelt); outbox = noch nicht gespeicherte Änderungen */
+const S={notes:load(CACHE,{notes:{},tags:[]}).notes||{},tags:load(CACHE,{tags:[]}).tags||[],outbox:load(OUT,{}),
+  cur:null,online:null,ready:false,inflight:{},timer:{},dirtyEditor:false};
+const saveCache=()=>store(CACHE,{notes:S.notes,tags:S.tags});
+const saveOut=()=>store(OUT,S.outbox);
+const view=id=>({...S.notes[id],...(S.outbox[id]||{})}); // lokale Änderung gewinnt in der Anzeige
+
+/* ---------- Server ---------- */
+class AuthErr extends Error{}
+class NetErr extends Error{}
+async function api(a,body,q=''){
+  let r;
+  try{r=await fetch(API+'?a='+a+q,{method:body?'POST':'GET',cache:'no-store',
+    headers:{'X-Kalender-Key':encodeURIComponent(pw()),...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined})}
+  catch(e){throw new NetErr('offline')}
+  let d=null;try{d=await r.json()}catch(e){if(!r.ok||!d)throw new NetErr('Server antwortet nicht ('+r.status+')')}
+  if(r.status===401)throw new AuthErr();
+  return {status:r.status,ok:r.ok,data:d};
+}
+function net(text,cls){const n=$('#net');n.textContent=text;n.className='st '+(cls||'')}
+function setOnline(v,msg){S.online=v;if(v)net('● Mit Notion verbunden','ok');else net(msg||'○ Offline – Änderungen werden später gespeichert','warn')}
+
+function askPassword(msg){return new Promise(res=>{
+  const d=$('#login'),f=$('#loginForm');$('#loginMsg').textContent=msg||'';f.reset();
+  f.onsubmit=e=>{e.preventDefault();try{localStorage.setItem(PWKEY,f.elements.pw.value)}catch(err){}d.close();res()};
+  d.oncancel=e=>e.preventDefault();d.showModal();f.elements.pw.focus()})}
+
+function askSetup(cancelable){return new Promise(res=>{
+  const d=$('#setup'),f=$('#setupForm'),m=$('#setupMsg');m.textContent='';f.reset();
+  $('#setupCancel').classList.toggle('hidden',!cancelable);
+  $('#setupCancel').onclick=()=>{d.close();res(false)};
+  d.oncancel=e=>{if(!cancelable)e.preventDefault();else res(false)};
+  f.onsubmit=async e=>{e.preventDefault();m.textContent='Prüfe …';
+    try{const r=await api('setup',{token:f.elements.token.value,db:f.elements.db.value});
+      if(!r.ok){m.textContent=r.data?.message||'Fehler';return}
+      d.close();res(true)}
+    catch(err){m.textContent=err instanceof NetErr?'Server nicht erreichbar.':'Nicht angemeldet.'}};
+  d.showModal()})}
+
+/* Mit Server verbinden: Passwort → Notion-Einrichtung → Liste laden */
+async function connect(){
+  for(;;){
+    try{
+      if(!pw()){await askPassword();continue}
+      const r=await api('status');
+      if(r.status===503){setOnline(false,'Kein Passwort auf dem Server gesetzt (werkzeuge/passwort-setzen.mjs)');net($('#net').textContent,'err');return false}
+      if(!r.ok)throw new NetErr(r.data?.message);
+      S.db=r.data;
+      if(!r.data.configured){await askSetup(false);continue}
+      return true;
+    }catch(e){
+      if(e instanceof AuthErr){await askPassword(pw()?'Passwort falsch.':'');continue}
+      setOnline(false);return false}
+  }
+}
+
+async function refresh(){
+  if(!S.ready&&!(S.ready=await connect()))return;
+  net('Lade …');
+  try{
+    const r=await api('list');
+    if(r.status===409){S.ready=false;return refresh()}
+    if(!r.ok){setOnline(false,'⚠︎ '+(r.data?.message||'Fehler beim Laden'));net($('#net').textContent,'err');return}
+    const seen=new Set();
+    for(const m of r.data.notes){seen.add(m.id);const old=S.notes[m.id];
+      S.notes[m.id]=old&&old.edited===m.edited?{...old,...m}:{...m,body:old?.body,ver:old?.edited===m.edited?old.ver:undefined,stale:!!old}}
+    for(const id of Object.keys(S.notes))if(!seen.has(id)&&!id.startsWith('tmp-')&&!S.outbox[id])delete S.notes[id];
+    S.tags=r.data.tags;saveCache();setOnline(true);renderList();
+    if(S.cur&&S.notes[S.cur]&&S.notes[S.cur].ver===undefined)fetchNote(S.cur);
+    flushAll();prefetch();
+  }catch(e){if(e instanceof AuthErr){S.ready=false;return refresh()}setOnline(false)}
+}
+
+/* Text einer Notiz holen (falls nicht vorhanden oder veraltet) */
+async function fetchNote(id){
+  if(id.startsWith('tmp-'))return;
+  try{const r=await api('get',null,'&id='+encodeURIComponent(id));
+    if(r.status===404){delete S.notes[id];saveCache();renderList();if(S.cur===id)openNote(null);return}
+    if(!r.ok)return;
+    S.notes[id]={...r.data,stale:false};saveCache();renderList();
+    if(S.cur===id&&!S.outbox[id]&&!S.dirtyEditor)fillEditor();
+  }catch(e){if(e instanceof AuthErr){S.ready=false;refresh()}}
+}
+let prefetching=false;
+async function prefetch(){ // im Hintergrund, damit Suche und Offline-Lesen den vollen Text kennen
+  if(prefetching)return;prefetching=true;
+  try{for(const n of Object.values(S.notes).filter(n=>n.ver===undefined&&!n.id.startsWith('tmp-')).slice(0,60)){
+    if(!S.online)break;await fetchNote(n.id);await new Promise(r=>setTimeout(r,350))}}
+  finally{prefetching=false}
+}
+
+/* ---------- Speichern ---------- */
+function queue(id,patch){
+  const base=S.notes[id]||{};
+  const o=S.outbox[id]||{id,title:base.title||'',tags:base.tags||[],pinned:!!base.pinned,body:base.body??'',base:base.ver};
+  Object.assign(o,patch,{seq:(o.seq||0)+1,at:new Date().toISOString()});
+  S.outbox[id]=o;saveOut();
+  clearTimeout(S.timer[id]);S.timer[id]=setTimeout(()=>flush(id),1200);
+  status();renderList();
+}
+async function flush(id){
+  const o=S.outbox[id];if(!o||S.inflight[id]||!S.ready)return;
+  S.inflight[id]=true;status();
+  const seq=o.seq,isNew=id.startsWith('tmp-');
+  try{
+    if(o.deleted){
+      if(!isNew){const r=await api('delete',{id});if(!r.ok&&r.status!==424)throw new Error(r.data?.message)}
+      delete S.outbox[id];delete S.notes[id];saveOut();saveCache();return;
+    }
+    const r=await api('save',{id:isNew?'':id,title:o.title,tags:o.tags,pinned:o.pinned,body:S.notes[id]?.readonly?null:o.body,base:o.base,force:o.force});
+    if(r.status===409&&r.data?.error==='conflict'){delete S.inflight[id];return conflict(id,r.data.note)}
+    if(!r.ok)throw new Error(r.data?.message||'Fehler '+r.status);
+    const n=r.data,cur=S.outbox[id];
+    S.notes[n.id]={...n,body:cur.seq===seq?n.body:cur.body};
+    if(isNew){delete S.notes[id];if(S.cur===id){S.cur=n.id;history.replaceState(null,'','#'+n.id)}}
+    if(cur.seq===seq)delete S.outbox[id];
+    else{delete S.outbox[id];S.outbox[n.id]={...cur,id:n.id,base:n.ver,force:false};setTimeout(()=>flush(n.id),300)}
+    saveOut();saveCache();setOnline(true);
+  }catch(e){
+    if(e instanceof AuthErr){S.ready=false;refresh()}
+    else if(e instanceof NetErr)setOnline(false);
+    else{net('⚠︎ Speichern fehlgeschlagen: '+e.message,'err');}
+  }finally{delete S.inflight[id];renderList();if(S.cur)syncEditorMeta()}
+}
+const flushAll=()=>Object.keys(S.outbox).forEach(flush);
+
+function conflict(id,theirs){
+  const d=$('#conflict');$('#cTitle').textContent=S.outbox[id]?.title||theirs.title||'Ohne Titel';
+  d.onclose=()=>{
+    const mine=S.outbox[id];if(!mine)return;
+    if(d.returnValue==='mine'){mine.force=true;mine.base=theirs.ver;saveOut();flush(id)}
+    else{ // meine Fassung als neue Notiz sichern, dann die andere anzeigen
+      const tid='tmp-'+Date.now();
+      S.notes[tid]={id:tid,title:(mine.title||'Ohne Titel')+' (Konflikt-Kopie)',tags:mine.tags,pinned:false,body:mine.body};
+      S.outbox[tid]={...mine,id:tid,title:S.notes[tid].title,base:undefined,force:false,seq:1};
+      delete S.outbox[id];S.notes[id]=theirs;saveOut();saveCache();
+      if(S.cur===id)fillEditor();renderList();flush(tid)}
+  };
+  d.returnValue='';d.showModal();
+}
+
+/* ---------- Anzeige ---------- */
+const when=iso=>{if(!iso)return '';const d=new Date(iso),now=new Date();
+  return d.toDateString()===now.toDateString()?d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})
+    :d.toLocaleDateString('de-DE',{day:'numeric',month:'short',year:d.getFullYear()===now.getFullYear()?undefined:'numeric'})};
+const preview=b=>(b||'').split('\n').map(l=>l.replace(/^(#+|[-*•]|\d+[.)]|>|\[[ xX]\])\s+/,'').replace(/[*_~`]/g,'').trim()).filter(Boolean).slice(0,2).join(' · ');
+
+function renderList(){
+  const q=$('#q').value.trim().toLowerCase(),tf=$('#tagf').value;
+  const ids=new Set([...Object.keys(S.notes),...Object.keys(S.outbox)]);
+  let all=[...ids].map(view).filter(n=>!n.deleted);
+  const tags=[...new Set([...S.tags,...all.flatMap(n=>n.tags||[])])].sort((a,b)=>a.localeCompare(b,'de'));
+  $('#tagf').innerHTML='<option value="">Alle Tags</option>'+tags.map(t=>`<option${t===tf?' selected':''}>${esc(t)}</option>`).join('');
+  $('#taglist').innerHTML=tags.map(t=>`<option value="${esc(t)}">`).join('');
+  if(tf)all=all.filter(n=>(n.tags||[]).includes(tf));
+  if(q)all=all.filter(n=>[n.title,(n.tags||[]).join(' '),n.body].join('\n').toLowerCase().includes(q));
+  all.sort((a,b)=>(b.pinned-a.pinned)||String(b.at||b.edited||'').localeCompare(String(a.at||a.edited||'')));
+  $('#list').innerHTML=all.length?all.map(n=>`<button class="item${n.id===S.cur?' sel':''}" data-id="${esc(n.id)}">
+    <b>${n.pinned?'📌':''}<span>${esc(n.title||'Ohne Titel')}</span>${S.outbox[n.id]?'<i class="dirty" title="Noch nicht gespeichert"></i>':''}</b>
+    <p>${esc(preview(n.body))||'&nbsp;'}</p>
+    <div class="meta">${esc(when(n.at||n.edited))}${(n.tags||[]).slice(0,3).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div></button>`).join('')
+    :`<div class="empty">${q||tf?'Nichts gefunden.':'Noch keine Notizen.<br>Leg mit „+ Neu“ die erste an.'}</div>`;
+}
+
+function status(){
+  const id=S.cur;if(!id)return;const st=$('#st');
+  if(S.inflight[id]){st.textContent='Speichere …';st.className='st'}
+  else if(S.outbox[id]){st.textContent=S.online===false?'Offline – lokal gesichert':'Nicht gespeichert';st.className='st warn'}
+  else if(id.startsWith('tmp-')){st.textContent='';st.className='st'}
+  else{st.textContent='✓ In Notion gespeichert';st.className='st ok'}
+}
+
+function syncEditorMeta(){
+  const n=S.cur&&view(S.cur);if(!n||!n.id)return;
+  $('#pin').classList.toggle('on',!!n.pinned);
+  const url=S.notes[S.cur]?.url;$('#open').classList.toggle('hidden',!url);if(url)$('#open').href=url;
+  $('#when').textContent=n.edited?'Zuletzt geändert: '+new Date(n.edited).toLocaleString('de-DE',{dateStyle:'medium',timeStyle:'short'}):'';
+  const ro=!!S.notes[S.cur]?.readonly;$('#ro').classList.toggle('hidden',!ro);$('#body').readOnly=ro||n.body===undefined;
+  status();
+}
+function fillEditor(){
+  const n=view(S.cur);
+  $('#title').value=n.title||'';$('#tags').value=(n.tags||[]).join(', ');
+  $('#body').value=n.body??(S.online===false?'(Text ist offline nicht verfügbar)':'Lade …');
+  S.dirtyEditor=false;grow();syncEditorMeta();
+}
+function grow(){const b=$('#body');b.style.height='auto';b.style.height=Math.max(b.scrollHeight+4,window.innerHeight*.6)+'px'}
+
+function openNote(id,focus){
+  if(S.cur&&S.timer[S.cur]){clearTimeout(S.timer[S.cur]);flush(S.cur)}
+  S.cur=id&&(S.notes[id]||S.outbox[id])?id:null;
+  document.body.classList.toggle('editing',!!S.cur);
+  $('#none').classList.toggle('hidden',!!S.cur);$('#sheet').classList.toggle('hidden',!S.cur);
+  for(const b of document.querySelectorAll('.bar button:not(#back)'))b.disabled=!S.cur;
+  if(!S.cur){$('#st').textContent='';renderList();return}
+  fillEditor();renderList();
+  const n=S.notes[id];if(n&&!id.startsWith('tmp-')&&(n.ver===undefined||n.stale)&&S.online!==false)fetchNote(id);
+  if(focus)$(focus).focus();
+}
+function route(){const id=decodeURIComponent(location.hash.slice(1));if(id!==S.cur)openNote(id||null)}
+function go(id,focus){if(id){if(location.hash.slice(1)!==id)location.hash=id;openNote(id,focus)}else{if(location.hash)history.pushState(null,'',location.pathname+location.search);openNote(null)}}
+
+/* ---------- Bedienung ---------- */
+$('#new').onclick=()=>{
+  const id='tmp-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const tf=$('#tagf').value;
+  S.notes[id]={id,title:'',tags:tf?[tf]:[],pinned:false,body:'',ver:undefined};
+  go(id,'#title');
+};
+$('#list').onclick=e=>{const b=e.target.closest('.item');if(b)go(b.dataset.id)};
+$('#back').onclick=()=>go(null);
+$('#q').oninput=renderList;$('#tagf').onchange=renderList;
+$('#title').oninput=()=>{S.dirtyEditor=true;queue(S.cur,{title:$('#title').value})};
+$('#title').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('#body').focus()}};
+$('#tags').oninput=()=>{S.dirtyEditor=true;queue(S.cur,{tags:[...new Set($('#tags').value.split(',').map(t=>t.trim()).filter(Boolean))]})};
+$('#body').oninput=()=>{if($('#body').readOnly)return;S.dirtyEditor=true;grow();queue(S.cur,{body:$('#body').value})};
+$('#body').onkeydown=e=>{ // Listen automatisch fortsetzen
+  if(e.key!=='Enter'||e.shiftKey||e.isComposing)return;
+  const b=e.target,p=b.selectionStart,start=b.value.lastIndexOf('\n',p-1)+1,line=b.value.slice(start,p);
+  const m=line.match(/^((?:- )?\[[ xX]\] |[-*•] |(\d+)([.)]) |> )/);if(!m)return;
+  e.preventDefault();
+  if(line===m[1]){b.setRangeText('',start,p,'end')}
+  else{const next=m[2]?(+m[2]+1)+m[3]+' ':m[1].replace(/\[[xX]\]/,'[ ]');b.setRangeText('\n'+next,p,b.selectionEnd,'end')}
+  b.dispatchEvent(new Event('input'));
+};
+$('#pin').onclick=()=>{const n=view(S.cur);queue(S.cur,{pinned:!n.pinned});syncEditorMeta()};
+$('#del').onclick=()=>{
+  const n=view(S.cur);if(!confirm(`„${n.title||'Ohne Titel'}“ löschen?\n\nDie Seite landet im Notion-Papierkorb und kann dort 30 Tage lang wiederhergestellt werden.`))return;
+  const id=S.cur;
+  if(id.startsWith('tmp-')&&!S.inflight[id]){delete S.notes[id];delete S.outbox[id];saveOut()}
+  else{S.outbox[id]={...(S.outbox[id]||{id}),deleted:true,seq:(S.outbox[id]?.seq||0)+1};saveOut();flush(id)}
+  go(null);
+};
+$('#sync').onclick=()=>{S.ready=S.ready&&S.online!==false;refresh()};
+$('#menu').onclick=()=>{$('#dbInfo').innerHTML=S.db?.dbTitle?`Verbunden mit der Notion-Datenbank <a href="${esc(S.db.dbUrl||'#')}" target="_blank" rel="noopener">${esc(S.db.dbTitle)}</a>.`:'Noch nicht mit Notion verbunden.';$('#settings').showModal()};
+$('#reSetup').onclick=async()=>{$('#settings').close();if(await askSetup(true)){S.notes={};saveCache();S.ready=false;refresh()}};
+$('#logout').onclick=()=>{
+  const n=Object.keys(S.outbox).length;
+  if(!confirm((n?`Achtung: ${n} Änderung(en) sind noch nicht gespeichert und gehen verloren.\n\n`:'')+'Auf diesem Gerät abmelden? Passwort und lokale Kopie der Notizen werden entfernt (auch für den Kalender).'))return;
+  try{[PWKEY,CACHE,OUT].forEach(k=>localStorage.removeItem(k))}catch(e){}location.hash='';location.reload()};
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.altKey&&e.key.toLowerCase()==='n'){e.preventDefault();$('#new').click()}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();if(S.cur)flush(S.cur)}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='f'&&!document.querySelector('dialog[open]')){e.preventDefault();$('#q').focus()}
+});
+window.addEventListener('hashchange',route);window.addEventListener('popstate',route);
+window.addEventListener('resize',grow);
+window.addEventListener('online',()=>refresh());
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible')refresh();
+  else Object.keys(S.timer).forEach(id=>{clearTimeout(S.timer[id]);flush(id)}); // beim Wegwechseln sofort speichern
+});
+setInterval(()=>{if(Object.keys(S.outbox).length)(S.online===false?refresh:flushAll)()},30000);
+window.addEventListener('beforeunload',e=>{if(Object.keys(S.outbox).length){flushAll();e.preventDefault()}});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+renderList();route();if(!S.cur)openNote(null);refresh();
+</script>
+</body>
+</html>
