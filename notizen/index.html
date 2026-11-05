@@ -127,7 +127,7 @@ dialog label input{margin-top:3px}
 
 <dialog id="login"><form method="dialog" id="loginForm">
   <h2>Anmelden</h2>
-  <p>Die Notizen sind mit demselben Passwort geschützt wie dein Kalender. Es bleibt auf diesem Gerät gespeichert.</p>
+  <p>Die Notizen sind passwortgeschützt. Das Passwort bleibt auf diesem Gerät gespeichert.</p>
   <label>Passwort<input type="password" name="pw" required autocomplete="current-password"></label>
   <div class="msg" id="loginMsg"></div>
   <div class="df"><button type="submit" class="primary">Anmelden</button></div>
@@ -230,7 +230,7 @@ async function connect(){
     try{
       if(!pw()){await askPassword();continue}
       const r=await api('status');
-      if(r.status===503){setOnline(false,'Kein Passwort auf dem Server gesetzt (werkzeuge/passwort-setzen.mjs)');net($('#net').textContent,'err');return false}
+      if(r.status===503){setOnline(false,'Kein App-Passwort auf dem Server gesetzt (siehe Anleitung)');net($('#net').textContent,'err');return false}
       if(!r.ok)throw new NetErr(r.data?.message);
       S.db=r.data;
       if(!r.data.configured){await askSetup(false);continue}
@@ -423,7 +423,7 @@ $('#menu').onclick=()=>{$('#dbInfo').innerHTML=S.db?.dbTitle?`Verbunden mit der 
 $('#reSetup').onclick=async()=>{$('#settings').close();if(await askSetup(true)){S.notes={};saveCache();S.ready=false;refresh()}};
 $('#logout').onclick=()=>{
   const n=Object.keys(S.outbox).length;
-  if(!confirm((n?`Achtung: ${n} Änderung(en) sind noch nicht gespeichert und gehen verloren.\n\n`:'')+'Auf diesem Gerät abmelden? Passwort und lokale Kopie der Notizen werden entfernt (auch für den Kalender).'))return;
+  if(!confirm((n?`Achtung: ${n} Änderung(en) sind noch nicht gespeichert und gehen verloren.\n\n`:'')+'Auf diesem Gerät abmelden? Passwort und lokale Kopie der Notizen werden entfernt.'))return;
   try{[PWKEY,CACHE,OUT].forEach(k=>localStorage.removeItem(k))}catch(e){}location.hash='';location.reload()};
 document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.altKey&&e.key.toLowerCase()==='n'){e.preventDefault();$('#new').click()}

@@ -1,10 +1,10 @@
 Options -Indexes
 
 # Interne Dateien und Ordner nie ausliefern
-<FilesMatch "^(kalender-auth\.php|README.*|\.gitignore)$">
+<FilesMatch "^(kalender-auth\.php|README.*|\.gitignore|netlify\.toml|package(-lock)?\.json)$">
   Require all denied
 </FilesMatch>
-RedirectMatch 404 /(data|werkzeuge|_netlify-variante|\.deploy-now|\.git|\.github)(/|$)
+RedirectMatch 404 /(data|werkzeuge|netlify|node_modules|_netlify-variante|\.deploy-now|\.git|\.github)(/|$)
 
 <IfModule mod_headers.c>
   Header always set X-Frame-Options "DENY"

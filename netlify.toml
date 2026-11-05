@@ -1,0 +1,23 @@
+# Netlify: Notiz-App (Ordner notizen/) + Notion-Brücke (netlify/functions/notion.mts)
+# Der Kalender läuft weiterhin über IONOS Deploy Now; dieses Projekt veröffentlicht nur die Notizen.
+[build]
+  publish = "notizen"
+  functions = "netlify/functions"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"

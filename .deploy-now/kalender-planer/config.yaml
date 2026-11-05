@@ -8,9 +8,11 @@ deploy:
   bootstrap:
     excludes:
       - werkzeuge
+      - netlify
       - .template-renderer-data
   recurring:
     excludes:
       - data
       - werkzeuge
+      - netlify
       - .template-renderer-data
